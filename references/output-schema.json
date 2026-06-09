@@ -1,0 +1,434 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude.skills/tiktok-script-gen/output-schema-v1.json",
+  "title": "TikTok Script Output Schema",
+  "description": "JSON Schema for tiktok-script-gen v1 output validation (AC15). Covers all fields defined in requirements.md §5.",
+  "type": "object",
+  "required": [
+    "meta",
+    "hook_3s",
+    "scene_list",
+    "seedance_segments",
+    "cta",
+    "hashtags",
+    "cover",
+    "title",
+    "music_suggestion",
+    "compliance_check",
+    "cross_platform_tips"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "type": "object",
+      "description": "Script metadata including duration, CRP eligibility, language, niche, monetization goal, and KPI estimates.",
+      "required": [
+        "duration_sec",
+        "duration_meets_crp",
+        "language",
+        "niche",
+        "monetization_goal",
+        "estimated_kpi"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "duration_sec": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Video target duration in seconds."
+        },
+        "duration_meets_crp": {
+          "type": "boolean",
+          "description": "Whether duration meets CRP >=60s minimum. False if <60s."
+        },
+        "language": {
+          "type": "string",
+          "description": "Output language code (e.g., en, zh, es)."
+        },
+        "niche": {
+          "type": "string",
+          "enum": ["beauty", "tech", "edu", "food", "travel", "fitness", "finance", "comedy", "shop", "other"],
+          "description": "Content vertical (10-class enum)."
+        },
+        "monetization_goal": {
+          "type": "string",
+          "enum": ["crp", "shop", "brand_deal", "live_funnel", "awareness"],
+          "description": "Monetization path determining script style."
+        },
+        "estimated_kpi": {
+          "type": "object",
+          "required": ["expected_completion_rate", "expected_rpm_usd"],
+          "additionalProperties": false,
+          "properties": {
+            "expected_completion_rate": {
+              "type": "string",
+              "description": "Expected completion rate range (e.g., '55-65%')."
+            },
+            "expected_rpm_usd": {
+              "type": "string",
+              "description": "Expected RPM range in USD (e.g., '0.5-0.8')."
+            }
+          }
+        },
+        "total_seedance_segments": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total number of Seedance segments (one per <=15s chunk)."
+        }
+      }
+    },
+    "hook_3s": {
+      "type": "object",
+      "description": "First 3-5 second hook with primary version and A/B variants.",
+      "required": ["visual", "voiceover", "on_screen_text", "variants"],
+      "additionalProperties": false,
+      "properties": {
+        "visual": {
+          "type": "string",
+          "description": "Visual description of the hook shot."
+        },
+        "voiceover": {
+          "type": "string",
+          "description": "Voiceover text for the hook."
+        },
+        "on_screen_text": {
+          "type": "string",
+          "description": "On-screen text overlay for the hook."
+        },
+        "retention_tactic": {
+          "type": "string",
+          "enum": ["visual-shock", "curiosity-question", "pain-point", "number-promise", "contrast"],
+          "description": "Retention tactic used in the primary hook."
+        },
+        "variants": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "description": "A/B hook variants (default 2, max 5).",
+          "items": {
+            "type": "object",
+            "required": ["visual", "voiceover", "on_screen_text"],
+            "additionalProperties": false,
+            "properties": {
+              "visual": { "type": "string" },
+              "voiceover": { "type": "string" },
+              "on_screen_text": { "type": "string" },
+              "retention_tactic": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "scene_list": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Full scene-by-scene breakdown of the entire video.",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "start_sec",
+          "end_sec",
+          "shot_type",
+          "template_id",
+          "visual_description",
+          "voiceover",
+          "on_screen_text",
+          "retention_tactic"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Scene sequence number."
+          },
+          "start_sec": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Scene start time in seconds."
+          },
+          "end_sec": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Scene end time in seconds."
+          },
+          "shot_type": {
+            "type": "string",
+            "description": "Camera shot type (e.g., close-up, medium-shot, split-screen)."
+          },
+          "template_id": {
+            "type": "string",
+            "description": "Template ID for this scene (must be one of 18 known templates)."
+          },
+          "visual_description": {
+            "type": "string",
+            "description": "Visual description of the scene."
+          },
+          "voiceover": {
+            "type": "string",
+            "description": "Voiceover / narration text for this scene."
+          },
+          "on_screen_text": {
+            "type": "string",
+            "description": "On-screen text overlay for this scene."
+          },
+          "retention_tactic": {
+            "type": "string",
+            "description": "Retention tactic used in this scene."
+          }
+        }
+      }
+    },
+    "seedance_segments": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Seedance 2.0 generation segments, each <=15s. Each segment corresponds to one independent Seedance prompt.",
+      "items": {
+        "type": "object",
+        "required": [
+          "segment_id",
+          "start_sec",
+          "end_sec",
+          "duration_sec",
+          "scene_ids",
+          "template_hint",
+          "continuity_hint",
+          "prompt_draft",
+          "target_model",
+          "reference_files",
+          "requires_manual_review"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "segment_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Segment sequence number."
+          },
+          "start_sec": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Segment start time in seconds."
+          },
+          "end_sec": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Segment end time in seconds."
+          },
+          "duration_sec": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 15,
+            "description": "Segment duration in seconds. MUST be <= 15 (Seedance 2.0 single-generation limit)."
+          },
+          "scene_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
+            "items": { "type": "integer" },
+            "description": "IDs of scenes included in this segment (1-3 scenes per segment)."
+          },
+          "template_id": {
+            "type": "string",
+            "description": "Internal TikTok template ID used for scene orchestration."
+          },
+          "template_hint": {
+            "type": "string",
+            "description": "Downstream template hint mapped to one of video_prompt_gen's 13 template IDs."
+          },
+          "continuity_hint": {
+            "type": "string",
+            "description": "Cross-segment visual continuity hint (lighting, position, color tone). Segment[0] value is 'opening'."
+          },
+          "prompt_draft": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Seedance 2.0 prompt draft (Chinese, 50-150 characters). Pre-filled for video_prompt_gen fast-track input."
+          },
+          "target_model": {
+            "type": "string",
+            "description": "Target AI video model (default: 'seedance-2.0')."
+          },
+          "reference_files": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Reference files for Seedance @引用 system (e.g., '@图片1')."
+          },
+          "requires_manual_review": {
+            "type": "boolean",
+            "description": "If true, this segment's prompt_draft failed mirror self-check after 1 auto-rewrite and needs human review."
+          }
+        }
+      }
+    },
+    "cta": {
+      "type": "object",
+      "description": "Call-to-action at the end of the video.",
+      "required": ["type", "text", "timing_sec"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["comment_question", "like_prompt", "share_prompt", "shop_cta", "live_cta", "follow_cta", "composite"],
+          "description": "CTA type determined by monetization_goal."
+        },
+        "text": {
+          "type": "string",
+          "description": "CTA text."
+        },
+        "timing_sec": {
+          "type": "number",
+          "minimum": 0,
+          "description": "When the CTA appears/triggers in the video timeline (seconds)."
+        }
+      }
+    },
+    "hashtags": {
+      "type": "object",
+      "description": "Hashtags for the video post.",
+      "required": ["trending", "niche", "branded"],
+      "additionalProperties": false,
+      "properties": {
+        "trending": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Trending / injected hashtags."
+        },
+        "niche": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Niche-specific hashtags."
+        },
+        "branded": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Brand-specific hashtags."
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Explanation of hashtag selection strategy."
+        }
+      }
+    },
+    "cover": {
+      "type": "object",
+      "description": "Video cover / thumbnail specification.",
+      "required": ["image_prompt", "overlay_text", "color_scheme"],
+      "additionalProperties": false,
+      "properties": {
+        "image_prompt": {
+          "type": "string",
+          "description": "Image prompt for cover generation (if using AI cover)."
+        },
+        "overlay_text": {
+          "type": "string",
+          "description": "Text overlay on the cover image."
+        },
+        "color_scheme": {
+          "type": "string",
+          "description": "Color scheme (e.g., high-contrast, warm, cool)."
+        }
+      }
+    },
+    "title": {
+      "type": "string",
+      "description": "Video title (12-25 words for English, 8-20 characters for Chinese)."
+    },
+    "music_suggestion": {
+      "type": "object",
+      "description": "Music and sound suggestions for the video.",
+      "required": ["mood", "bpm_range", "license_safe", "tiktok_library_keywords"],
+      "additionalProperties": false,
+      "properties": {
+        "mood": {
+          "type": "string",
+          "description": "Music mood / genre (e.g., upbeat, calming, energetic)."
+        },
+        "bpm_range": {
+          "type": "string",
+          "description": "Recommended BPM range (e.g., '120-130')."
+        },
+        "license_safe": {
+          "type": "boolean",
+          "description": "Whether the suggested music is safe for commercial use."
+        },
+        "tiktok_library_keywords": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Keywords to search in TikTok Commercial Music Library. Must have at least 1 entry."
+        }
+      }
+    },
+    "compliance_check": {
+      "type": "object",
+      "description": "Compliance check results. Non-blocking: issues are annotated, not rejected.",
+      "required": [
+        "originality_ok",
+        "watermark_warning",
+        "banned_words_hit",
+        "duration_meets_crp",
+        "music_copyright_advice",
+        "notes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "originality_ok": {
+          "type": "boolean",
+          "description": "Whether the content appears original (no plagiarism flags). Currently always true."
+        },
+        "watermark_warning": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "null" }
+          ],
+          "description": "Warning if third-party watermark patterns detected. null if clean."
+        },
+        "banned_words_hit": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["word", "location", "severity"],
+            "additionalProperties": false,
+            "properties": {
+              "word": { "type": "string" },
+              "location": { "type": "string" },
+              "severity": { "type": "string", "enum": ["high", "medium", "low"] }
+            }
+          },
+          "description": "Banned words detected in output. Empty array if clean."
+        },
+        "duration_meets_crp": {
+          "type": "boolean",
+          "description": "Whether the video duration qualifies for CRP."
+        },
+        "music_copyright_advice": {
+          "type": "string",
+          "description": "Music copyright safety advice. Always present."
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Accumulated compliance notes and warnings."
+        }
+      }
+    },
+    "cross_platform_tips": {
+      "type": "object",
+      "description": "Cross-platform adaptation tips for IG Reels and YouTube Shorts.",
+      "required": ["ig_reels", "yt_shorts"],
+      "additionalProperties": false,
+      "properties": {
+        "ig_reels": {
+          "type": "string",
+          "description": "Adaptation tips for Instagram Reels (max 90s, square/vertical, music copyright stricter)."
+        },
+        "yt_shorts": {
+          "type": "string",
+          "description": "Adaptation tips for YouTube Shorts (max 60s, vertical, different hashtag strategy)."
+        }
+      }
+    }
+  }
+}
